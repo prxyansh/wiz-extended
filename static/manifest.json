@@ -1,0 +1,10 @@
+{
+  "name": "WiZ Controller",
+  "short_name": "WiZ",
+  "description": "Philips WiZ light controller with digital audio music sync",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d14",
+  "theme_color": "#ff6b35",
+  "icons": []
+}

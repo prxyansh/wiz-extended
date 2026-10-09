@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Philips WiZ Extended</title>
+  <meta name="description" content="Cross-platform Philips WiZ light controller with digital audio music sync" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#0d0d14" />
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <header id="header">
+    <div class="brand">
+      <span class="brand-flame"></span>
+      <span class="brand-text">Philips WiZ Extended</span>
+    </div>
+    <div class="header-right">
+      <span class="header-version">v2.0</span>
+      <div class="ws-indicator" id="ws-dot" title="Server connection"></div>
+    </div>
+  </header>
+
+  <!-- ── Layout ────────────────────────────────────────────────────── -->
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+
+      <!-- Groups -->
+      <div class="sidebar-section">
+        <div class="section-head">
+          <span class="section-label">GROUPS</span>
+          <button class="link-btn" id="btn-new-group">+ New</button>
+        </div>
+        <div id="groups-list" class="lights-list">
+          <div class="empty-hint" id="empty-group-hint">No groups yet.</div>
+        </div>
+      </div>
+
+      <!-- Lights -->
+      <div class="sidebar-section">
+        <div class="section-head">
+          <span class="section-label">MY LIGHTS</span>
+          <button class="link-btn" id="btn-scan">⟳ Scan</button>
+        </div>
+        <div id="lights-list" class="lights-list">
+          <div class="empty-hint">No lights found.<br/>Click Scan to discover.</div>
+        </div>
+        <button class="ghost-btn full" id="btn-add-ip">+ Add by IP</button>
+      </div>
+
+      <!-- Presets -->
+      <div class="sidebar-section">
+        <div class="section-head">
+          <span class="section-label">PRESETS</span>
+          <button class="link-btn" id="btn-new-preset">+ Save Current</button>
+        </div>
+        <div id="presets-list" class="presets-list"></div>
+      </div>
+      
+      <!-- Tools -->
+      <div class="sidebar-section">
+        <div class="section-head">
+          <span class="section-label">TOOLS</span>
+        </div>
+        <div class="presets-list">
+          <div class="preset-item" id="nav-palette">
+            <span class="preset-color" style="background: linear-gradient(135deg, #ff0055, #00eeff)"></span>
+            <span class="preset-name">Image Palette</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main -->
+    <main class="main" id="main-area">
+
+      <!-- Empty state -->
+      <div id="no-selection" class="no-selection">
+        <div class="ns-icon"></div>
+        <h2 class="ns-title">Select a Light</h2>
+        <p class="ns-sub">Choose a saved light from the sidebar<br/>or scan for new ones.</p>
+      </div>
+
+      <!-- Palette Panel -->
+      <div id="panel-palette" class="ctrl-panel hidden">
+        <div class="light-header">
+          <div class="light-meta">
+            <h1 class="lh-name">Image Palette Extractor</h1>
+            <p class="ns-sub" style="margin-top: 5px; color: #a0a0a5;">Drag & Drop an image to extract its mood and apply it to your room.</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div id="palette-dropzone" class="dropzone">
+            <span id="dropzone-text">Drop image here or click to upload</span>
+            <input type="file" id="palette-file" accept="image/*" style="display: none;">
+          </div>
+          
+          <button id="btn-spotify-palette" class="action-btn" style="margin-top: 10px; width: 100%; background: #1DB954; color: black; font-weight: 600;">Sync from Spotify</button>
+
+          <div style="margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <input type="checkbox" id="toggle-spotify-auto" style="width: 16px; height: 16px;">
+            <label for="toggle-spotify-auto" style="color: #a0a0a5; font-size: 14px; cursor: pointer;">Auto-Sync Playing Track</label>
+          </div>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <img id="spotify-artwork" src="" alt="Album Art" style="display: none; max-width: 150px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin: 0 auto;">
+          </div>
+
+          <div id="palette-swatches" class="palette-swatches hidden">
+             <!-- Render swatches here -->
+          </div>
+          <button id="btn-apply-palette" class="action-btn hidden" style="margin-top: 20px; width: 100%;">Apply to Room</button>
+        </div>
+      </div>
+
+      <!-- Control panel -->
+      <div id="ctrl-panel" class="ctrl-panel hidden">
+
+        <!-- Light header -->
+        <div class="light-header">
+          <div class="light-meta">
+            <div class="light-name-row">
+              <h1 id="lh-name">Light</h1>
+              <button class="rename-btn" id="btn-rename" title="Rename"></button>
+              <button class="rename-btn hidden" id="btn-delete-group" title="Delete Group" style="margin-left: 8px;"></button>
+            </div>
+            <span class="light-ip" id="lh-ip">—</span>
+          </div>
+          <div class="light-status-row">
+            <span class="online-dot" id="online-dot"></span>
+            <span class="online-text" id="online-text">—</span>
+            
+            <div class="header-toggles">
+              <label class="pw-switch" title="Auto (Circadian Mode)">
+                <span class="circadian-label">Auto</span>
+                <input type="checkbox" id="circadian-toggle" />
+                <span class="pw-track"><span class="pw-thumb"></span></span>
+              </label>
+              
+              <label class="pw-switch" title="Power">
+                <input type="checkbox" id="pw-toggle" checked />
+                <span class="pw-track"><span class="pw-thumb"></span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode tabs -->
+        <div class="mode-tabs" role="tablist">
+          <button class="tab active" data-tab="color" role="tab">Color</button>
+          <button class="tab" data-tab="white" role="tab">White</button>
+          <button class="tab" data-tab="scene" role="tab">Scenes</button>
+        </div>
+
+        <!-- ── Color panel ──────────────────────────────────────────── -->
+        <div id="tab-color" class="tab-panel">
+          <div class="color-grid">
+
+            <!-- Color picker -->
+            <div class="picker-col">
+              <div class="picker-wrap" id="picker-wrap">
+                <canvas id="sv-canvas"></canvas>
+                <div id="sv-cursor" class="picker-cursor"></div>
+              </div>
+              <div class="hue-wrap">
+                <canvas id="hue-canvas"></canvas>
+                <div id="hue-cursor" class="hue-cursor"></div>
+              </div>
+            </div>
+
+            <!-- RGB sliders + hex -->
+            <div class="rgb-col">
+              <div class="sl-row">
+                <span class="sl-label">R</span>
+                <input type="range" id="sl-r" class="slider sl-r" min="0" max="255" value="255" />
+                <span class="sl-val" id="val-r">255</span>
+              </div>
+              <div class="sl-row">
+                <span class="sl-label">G</span>
+                <input type="range" id="sl-g" class="slider sl-g" min="0" max="255" value="80" />
+                <span class="sl-val" id="val-g">80</span>
+              </div>
+              <div class="sl-row">
+                <span class="sl-label">B</span>
+                <input type="range" id="sl-b" class="slider sl-b" min="0" max="255" value="0" />
+                <span class="sl-val" id="val-b">0</span>
+              </div>
+              <div class="sl-row hex-row">
+                <span class="sl-label">Hex</span>
+                <input type="text" id="hex-in" class="hex-input" value="#FF5000" maxlength="7" spellcheck="false" />
+                <div id="hex-preview" class="hex-preview"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── White panel ──────────────────────────────────────────── -->
+        <div id="tab-white" class="tab-panel hidden">
+          <div class="white-section">
+            <div class="temp-labels">
+              <span>🕯 Warm 2200K</span>
+              <span class="temp-value" id="temp-val-label">3000 K</span>
+              <span>6500K Cool </span>
+            </div>
+            <div class="temp-track-wrap">
+              <canvas id="temp-canvas" height="22"></canvas>
+              <input type="range" id="sl-temp" class="slider sl-temp" min="2200" max="6500" value="3000" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Scenes panel ─────────────────────────────────────────── -->
+        <div id="tab-scene" class="tab-panel hidden">
+          <div class="scenes-grid">
+            <button class="scene-btn" data-scene="1">Ocean</button>
+            <button class="scene-btn" data-scene="2">Romance</button>
+            <button class="scene-btn" data-scene="3">Sunset</button>
+            <button class="scene-btn" data-scene="4">Party</button>
+            <button class="scene-btn" data-scene="5">Fireplace</button>
+            <button class="scene-btn" data-scene="6">Cozy</button>
+            <button class="scene-btn" data-scene="7">Forest</button>
+            <button class="scene-btn" data-scene="8">Pastel</button>
+            <button class="scene-btn" data-scene="9">Wake up</button>
+            <button class="scene-btn" data-scene="10">Bedtime</button>
+            <button class="scene-btn" data-scene="11">Warm White</button>
+            <button class="scene-btn" data-scene="12">Daylight</button>
+            <button class="scene-btn" data-scene="13">Cool White</button>
+            <button class="scene-btn" data-scene="14">Night Light</button>
+            <button class="scene-btn" data-scene="15">Focus</button>
+            <button class="scene-btn" data-scene="16">Relax</button>
+            <button class="scene-btn" data-scene="17">True colors</button>
+            <button class="scene-btn" data-scene="18">TV time</button>
+            <button class="scene-btn" data-scene="19">Plantgrowth</button>
+            <button class="scene-btn" data-scene="20">Spring</button>
+            <button class="scene-btn" data-scene="21">Summer</button>
+            <button class="scene-btn" data-scene="22">Fall</button>
+            <button class="scene-btn" data-scene="23">Deepdive</button>
+            <button class="scene-btn" data-scene="24">Jungle</button>
+            <button class="scene-btn" data-scene="25">Mojito</button>
+            <button class="scene-btn" data-scene="26">Club</button>
+            <button class="scene-btn" data-scene="27">Christmas</button>
+            <button class="scene-btn" data-scene="28">Halloween</button>
+            <button class="scene-btn" data-scene="29">Candlelight</button>
+            <button class="scene-btn" data-scene="30">Golden white</button>
+            <button class="scene-btn" data-scene="31">Pulse</button>
+            <button class="scene-btn" data-scene="32">Steampunk</button>
+          </div>
+          
+          <div class="scene-speed-section">
+            <div class="speed-head">
+              <span>SCENE SPEED</span>
+              <span id="val-speed">100%</span>
+            </div>
+            <input type="range" id="sl-speed" class="slider sl-speed" min="20" max="200" value="100" />
+          </div>
+        </div>
+
+        <!-- ── Brightness (shared) ─────────────────────────────────── -->
+        <div class="bright-section">
+          <div class="bright-head">
+            <span>BRIGHTNESS</span>
+            <span id="val-bright">75%</span>
+          </div>
+          <input type="range" id="sl-bright" class="slider sl-bright" min="10" max="100" value="75" />
+        </div>
+
+        <!-- ── Sync Mode ──────────────────────────────────────────── -->
+        <div class="sync-section" id="sync-section">
+
+          <!-- Segmented control for Sync type -->
+          <div class="sync-tabs">
+            <button class="sync-tab active" data-sync="audio" id="tab-btn-audio">Audio</button>
+            <button class="sync-tab" data-sync="screen" id="tab-btn-screen">🖥️ Screen</button>
+            <button class="sync-tab" data-sync="weather" id="tab-btn-weather">☁️ Weather</button>
+            <button class="sync-tab" data-sync="pomodoro" id="tab-btn-pomodoro">Pomodoro</button>
+                        <button class="sync-tab" data-sync="alarm" id="tab-btn-alarm">Alarm</button>
+            <button class="sync-tab" data-sync="bpm" id="tab-btn-bpm">BPM Sync</button>
+          </div>
+
+          <!-- AUDIO SYNC VIEW -->
+          <div id="sync-view-audio" class="sync-view">
+            <div class="sync-head">
+              <div class="sync-title">
+                <span>MUSIC SYNC</span>
+                <span class="live-badge hidden" id="live-badge-audio">● LIVE</span>
+              </div>
+              <button class="sync-btn" id="btn-sync-audio">Start Sync</button>
+            </div>
+
+            <!-- BlackHole not found -->
+            <div id="bh-warning" class="bh-warning hidden">
+              <div class="bh-warning-body">
+                <span class="bh-warn-icon">⚠️</span>
+                <div>
+                  <strong>BlackHole not detected</strong>
+                  <p>Install to capture system audio digitally (no mic needed):</p>
+                  <code>brew install blackhole-2ch</code>
+                </div>
+              </div>
+              <div class="bh-warning-actions">
+                <button class="ghost-btn small" id="btn-setup-guide">Setup Guide</button>
+                <button class="ghost-btn small" id="btn-refresh-dev">Refresh</button>
+              </div>
+            </div>
+
+            <!-- Device selector -->
+            <div id="dev-row" class="dev-row hidden">
+              <span class="dev-dot"></span>
+              <select id="dev-select" class="dev-select"></select>
+            </div>
+
+            <!-- EQ bars -->
+            <div class="eq-wrap hidden" id="eq-wrap"></div>
+
+            <!-- Sync controls -->
+            <div class="sync-controls">
+              <div class="sync-ctrl-row">
+                <span>Mode</span>
+                <select id="sync-mode" class="sync-select">
+                  <optgroup label="Full Spectrum (16-Band)">
+                    <option value="spectral_prism">Spectral Prism (Full Rainbow Breathes)</option>
+                    <option value="tectonic">Tectonic (Bass vs Treble Split)</option>
+                    <option value="vocal_isolation">Vocal Isolation (Singer Steps Forward)</option>
+                    <option value="percussion_anatomy">Percussion Anatomy (See Every Hit)</option>
+                    <option value="concert_hall">Concert Hall (Spotlight + Room Wash)</option>
+                    <option value="slow_burn">Slow Burn (Lava Under Glass)</option>
+                    <option value="neural_storm">Neural Storm (Chaos on Drops)</option>
+                  </optgroup>
+                  <optgroup label="Spatial Stereo">
+                    <option value="surround_sound">Surround Sound (Left / Right Panning)</option>
+                  </optgroup>
+                  <optgroup label="Punchy & Percussive">
+                    <option value="precision_kick">Precision Kick (Isolated Low Transients)</option>
+                    <option value="rhythm_lead">🎸 Rhythm & Lead (Spatial Separation)</option>
+                    <option value="strobe_matrix">Strobe Matrix (Transient Chaos)</option>
+                    <option value="neon_heartbeat">Neon Heartbeat (Vaporwave Pulse)</option>
+                    <option value="stellar_pulse">Stellar Pulse (High Contrast)</option>
+                    <option value="quantum_flux">Quantum Flux (Chaotic Shifts)</option>
+                  </optgroup>
+                  <optgroup label="Flowing & Ambient">
+                    <option value="spectral_drift">Spectral Drift (Mood & Centroid)</option>
+                    <option value="aurora_breathing">Aurora Breathing (Energy Pulse)</option>
+                    <option value="synesthesia">Synesthesia (Frequency Mapping)</option>
+                  </optgroup>
+                  <optgroup label="3-Band Engine (Classic)">
+                    <option value="3band_classic">3-Band Classic (Lows/Mids/Highs)</option>
+                    <option value="3band_split">3-Band Split (Bass vs Treble)</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="sync-ctrl-row">
+                <span>Sensitivity</span>
+                <input type="range" id="sl-sens" class="slider sl-sens" min="1" max="50" value="10" />
+                <span id="val-sens">1.0×</span>
+              </div>
+            </div>
+          </div><!-- /audio-sync-view -->
+
+          <!-- SCREEN SYNC VIEW -->
+          <div id="sync-view-screen" class="sync-view hidden">
+            <div class="sync-head">
+              <div class="sync-title">
+                <span>AMBILIGHT MODE</span>
+                <span class="live-badge hidden" id="live-badge-screen">● LIVE</span>
+              </div>
+              <button class="sync-btn" id="btn-sync-screen">Start Sync</button>
+            </div>
+
+            <div class="sync-controls">
+              <div class="sync-ctrl-row">
+                <span>Capture Mode</span>
+                <select id="screen-mode" class="sync-select">
+                  <option value="average">🌫️ Average Color (Smooth Ambient)</option>
+                  <option value="dominant">Dominant Color (Vibrant Pops)</option>
+                  <option value="edges_average">🖼️ Edge Glow (Matches Screen Borders)</option>
+                  <option value="neon">Neon Pop (Max Saturation)</option>
+                  <option value="cinema">🍿 Cinema OLED (True Blacks & Dynamic)</option>
+                  <option value="center_action">🎯 Action Focus (Center Screen)</option>
+                </select>
+              </div>
+            </div>
+          </div><!-- /screen-sync-view -->
+
+          <!-- WEATHER SYNC VIEW -->
+          <div id="sync-view-weather" class="sync-view hidden">
+            <div class="sync-head">
+              <div class="sync-title">
+                <span>WEATHER SYNC</span>
+                <span class="live-badge hidden" id="live-badge-weather">● LIVE</span>
+              </div>
+              <button class="sync-btn" id="btn-sync-weather">Start Sync</button>
+            </div>
+
+            <div class="sync-controls">
+              <p style="font-size:12px; color:var(--txt-2); margin-top:8px;">
+                Lighting dynamically changes based on real-time weather at your location.
+              </p>
+            </div>
+          </div><!-- /weather-sync-view -->
+
+          <!-- POMODORO SYNC VIEW -->
+          <div id="sync-view-pomodoro" class="sync-view hidden">
+            <div class="sync-head">
+              <div class="sync-title">
+                <span>POMODORO FLOW</span>
+                <span class="live-badge hidden" id="live-badge-pomodoro">● LIVE</span>
+              </div>
+              <button class="sync-btn" id="btn-sync-pomodoro">Start Focus</button>
+            </div>
+
+            <div class="sync-controls" style="text-align: center;">
+              <div id="pomodoro-timer" style="font-size: 48px; font-weight: bold; margin: 16px 0; color: var(--txt-1); font-variant-numeric: tabular-nums;">25:00</div>
+              <div id="pomodoro-state" style="font-size: 14px; color: var(--txt-2); margin-bottom: 8px;">Ready to Focus</div>
+              <p style="font-size:12px; color:var(--txt-3); margin-top:16px;">
+                25m Focus White ➔ Smooth fade warning ➔ 5m Break (Ocean)
+              </p>
+            </div>
+          </div><!-- /pomodoro-sync-view -->
+
+          <!-- AI SYNC VIEW -->
+          
+          <!-- ALARM SYNC VIEW -->
+          <div id="sync-view-alarm" class="sync-view hidden">
+            <div class="sync-head">
+              <div class="sync-title">
+                <span>SUNRISE ALARM</span>
+                <span class="live-badge hidden" id="live-badge-alarm" style="background:var(--success);">● ARMED</span>
+              </div>
+            </div>
+
+            <div class="sync-controls" style="text-align: center;">
+              <input type="time" id="alarm-time" style="font-size: 32px; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: var(--txt-1); margin-bottom: 16px; font-variant-numeric: tabular-nums;" />
+              
+              <div style="display:flex; gap:8px;">
+                <button class="sync-btn" id="btn-sync-alarm" style="flex:1;">Set Alarm</button>
+                <button class="ghost-btn hidden" id="btn-clear-alarm" style="flex:1;">Clear</button>
+              </div>
+              <p style="font-size:12px; color:var(--txt-3); margin-top:16px;">
+                30 minutes before the set time, the room will slowly fade from deep red to bright daylight.
+              </p>
+            </div>
+          </div><!-- /alarm-sync-view -->
+
+          <!-- SPOTIFY SYNC VIEW -->
+
+
+          <!-- BPM SYNC VIEW -->
+          <div id="sync-view-bpm" class="sync-view hidden">
+            <div class="sync-head">
+              <div class="sync-title">
+                <span>LOCAL BPM SYNC</span>
+                <span class="live-badge hidden" id="live-badge-bpm" style="background:var(--success);">● BEATING</span>
+              </div>
+            </div>
+            <div class="sync-controls">
+              <div class="sync-ctrl-row" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                <p style="font-size: 12px; color: var(--txt-2);">
+                  Detects BPM from your system audio in real-time and pulses lights on the beat.
+                  Requires BlackHole (already set up for Audio Sync).
+                </p>
+                <div style="text-align: center; margin: 12px 0;">
+                  <span id="bpm-display" style="font-size: 48px; font-weight: 800; color: var(--accent);">--</span>
+                  <span style="font-size: 14px; color: var(--txt-2);"> BPM</span>
+                  <div id="bpm-confidence" style="font-size: 11px; color: var(--txt-3); margin-top: 4px;">Waiting...</div>
+                </div>
+                <div style="display: flex; gap: 12px; margin-bottom: 8px; font-size: 12px; color: var(--txt-2);">
+                  <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                    <input type="radio" name="bpm-dist" value="uniform" checked /> Uniform Pulse
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                    <input type="radio" name="bpm-dist" value="dynamic" /> Ping-Pong Pulse
+                  </label>
+                </div>
+                <button class="sync-btn" id="btn-sync-bpm" style="margin-top: 8px; width: 100%;">Start BPM Sync</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shared Sync Lights picker -->
+          <div class="sync-ctrl-row sync-lights-row" style="margin-top: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px;">
+            <span style="display:block;margin-bottom:8px;font-size:11px;letter-spacing:0.05em;color:var(--txt-2);">SYNC LIGHTS</span>
+            <div id="sync-cbs" class="sync-cbs"></div>
+          </div>
+
+        </div><!-- /sync-section -->
+      </div><!-- /ctrl-panel -->
+    </main>
+  </div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- ── Modals ──────────────────────────────────────────────────────── -->
+<div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+  <div class="modal-box" id="modal-box">
+    <div id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="primary-btn" id="modal-ok">OK</button>
+      <button class="ghost-btn" id="modal-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+  <script src="/static/app_v5.js" defer></script>
+</body>
+</html>

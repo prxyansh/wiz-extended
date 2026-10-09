@@ -1,0 +1,19 @@
+{
+  "sync_mode": "spectral_prism",
+  "sensitivity": 1,
+  "sync_light_ips": [
+    "192.168.1.34",
+    "192.168.1.33"
+  ],
+  "circadian_enabled": false,
+  "groups": [
+    {
+      "id": "0e9dbd18",
+      "name": "Lapis",
+      "ips": [
+        "192.168.1.34",
+        "192.168.1.33"
+      ]
+    }
+  ]
+}

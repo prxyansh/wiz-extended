@@ -1,0 +1,34 @@
+[
+  {
+    "id": "sunset",
+    "name": "Sunset",
+    "mode": "color",
+    "r": 255,
+    "g": 80,
+    "b": 20,
+    "brightness": 70
+  },
+  {
+    "id": "focus",
+    "name": "Focus",
+    "mode": "white",
+    "temp": 5000,
+    "brightness": 100
+  },
+  {
+    "id": "relax",
+    "name": "Relax",
+    "mode": "white",
+    "temp": 2700,
+    "brightness": 40
+  },
+  {
+    "id": "party",
+    "name": "Party",
+    "mode": "color",
+    "r": 160,
+    "g": 0,
+    "b": 255,
+    "brightness": 90
+  }
+]

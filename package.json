@@ -1,0 +1,15 @@
+{
+  "name": "philips-wiz-extended",
+  "version": "1.0.0",
+  "description": "Cross-platform smart light controller",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "tree-kill": "^1.2.2"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}
