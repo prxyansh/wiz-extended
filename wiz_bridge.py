@@ -282,6 +282,10 @@ class WizBridge:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        try:
+            sock.bind(("", 0))  # Bind to any port to properly receive responses on all platforms
+        except OSError:
+            pass
         sock.settimeout(1.0)
         
         # Bulbs are highly reliable at answering getPilot but flaky with registration
@@ -291,6 +295,7 @@ class WizBridge:
         targets = [BROADCAST_ADDR]
         for local_ip in _get_local_ips():
             base = ".".join(local_ip.split(".")[:3])
+            targets.append(f"{base}.255") # Subnet broadcast (crucial for Windows)
             targets.extend([f"{base}.{i}" for i in range(1, 255)])
 
         found: dict[str, dict] = {}

@@ -78,6 +78,23 @@ To use the real-time music visualizer, the app needs to "hear" what your compute
 
 ---
 
+## Troubleshooting & Failsafes
+
+If your bulbs are not being detected or audio sync isn't responding correctly, try these steps:
+
+### 1. Bulb Detection Issues
+The app uses UDP broadcast (Port 38899) to find lights. If it's failing:
+* **Windows Firewall:** By default, Windows Defender may block Python/Node.js from receiving UDP broadcasts. Go to *Windows Security > Firewall & network protection > Allow an app through firewall*, and ensure Node.js and Python are checked for both Private and Public networks.
+* **Network Isolation (AP Isolation):** Ensure your PC and the WiZ bulbs are on the exact same local network subnet. Some routers have a "Guest Network" or "AP Isolation / Client Isolation" feature enabled which prevents devices from talking to each other. Turn this off in your router settings.
+* **VPN / Virtual Interfaces:** If you use a VPN (like NordVPN or Tailscale), or have VirtualBox adapters, they can interfere with local network broadcasts. Try disabling them temporarily and run discovery again.
+
+### 2. Audio Detection Issues
+If the app doesn't seem to react to audio:
+* Check your system's output device. On Windows, ensure "Stereo Mix" is enabled and set as the default recording device. If "Stereo Mix" is missing, install **VB-Cable** or **VoiceMeeter**.
+* On macOS, ensure you have created a Multi-Output Device in the *Audio MIDI Setup* application that includes both your headphones/speakers AND **BlackHole 2ch**.
+
+---
+
 ## Open Source & Contributing
 
 This project is 100% free and open-source. We believe that smart home hardware shouldn't be locked behind restrictive proprietary apps. 
